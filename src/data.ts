@@ -30,6 +30,15 @@ export const repositoryReadmes: RepositoryReadme[] = [
   { componentId: id("component-admin"), repository: "product/admin", path: "README.md", revision: "main@b19ad42", summary: "管理画面のbuild、本番反映、反映後確認を記載", commands: [{ purpose: "production build", command: "pnpm build" }, { purpose: "本番デプロイ", command: "pnpm deploy:production --revision <revision>" }], cautions: ["バックエンドAPI反映後にデプロイ", "ユーザー詳細の本人確認状態を反映後に確認"] },
 ];
 
+export const repositoryVerificationRuns = [
+  { repository: "product/backend", revision: "a82f9c1", type: "contract" as const, name: "OpenAPI backward compatibility", result: "passed" as const, observedAt: "2026-09-20T09:12:00+09:00", url: "https://github.com/product/backend/actions/runs/4821" },
+  { repository: "product/backend", revision: "a82f9c1", type: "migration" as const, name: "expand migration dry-run", result: "passed" as const, observedAt: "2026-09-20T09:18:00+09:00", url: "https://github.com/product/backend/actions/runs/4822" },
+  { repository: "product/ios", revision: "5d442a7", type: "unit" as const, name: "KYCFlowTests", result: "passed" as const, observedAt: "2026-09-20T10:04:00+09:00", url: "https://github.com/product/ios/actions/runs/771" },
+  { repository: "product/ios", revision: "5d442a7", type: "build" as const, name: "TestFlight release build", result: "passed" as const, observedAt: "2026-09-20T10:21:00+09:00", url: "https://github.com/product/ios/releases/tag/kyc-rc1" },
+  { repository: "product/android", revision: "2ce84d0", type: "unit" as const, name: "KycViewModelTest", result: "passed" as const, observedAt: "2026-09-20T10:31:00+09:00", url: "https://github.com/product/android/actions/runs/665" },
+  { repository: "product/android", revision: "2ce84d0", type: "build" as const, name: "internal release bundle", result: "passed" as const, observedAt: "2026-09-20T10:42:00+09:00", url: "https://github.com/product/android/releases/tag/kyc-rc1" },
+];
+
 const identityChanges = [
   { id: id<"ComponentChange">("change-backend-kyc"), componentId: id<"Component">("component-backend"), ownerTeamId: id<"Team">("team-identity"), summary: "本人確認ステータスAPIを追加", pullRequests: [{ repository: "product/backend", number: 1842, revision: "a82f9c1", state: "merged" as const }], migration: { required: true, phase: "expand" as const, execution: "online" as const, backwardCompatible: true, estimatedMinutes: 8 }, maintenance: "none" as const, dependencyIds: [], deploymentWindow: "9月24日 19:00", recovery: "旧APIへ切り戻し" },
   { id: id<"ComponentChange">("change-ios-kyc"), componentId: id<"Component">("component-ios"), ownerTeamId: id<"Team">("team-ios"), summary: "本人確認フローを更新", pullRequests: [{ repository: "product/ios", number: 921, revision: "5d442a7", state: "review" as const }], migration: { required: false }, maintenance: "none" as const, dependencyIds: [id<"ComponentChange">("change-backend-kyc")], deploymentWindow: "9月27日 審査通過後", recovery: "Feature Flagを無効化" },
@@ -40,12 +49,32 @@ const identityChanges = [
 export const releases: Release[] = [
   {
     id: id("release-024"), code: "R–024", name: "本人確認フロー刷新", status: "preparing", ownerTeamId: id("team-identity"), scheduledFor: "2026-09-27",
+    planningPolicy: { priority: "compatibility", objective: "旧版クライアントの利用を継続したまま本人確認フローを切り替える", deadline: "2026-10-04T18:00", requireBackwardCompatibility: true, allowSplit: false },
     featureChanges: [{ id: id("feature-128"), name: "本人確認フロー刷新", description: "本人確認の入力と審査状態表示を更新する", componentChanges: identityChanges }],
     verifications: [
-      { id: id("verify-api"), releaseId: id("release-024"), componentChangeId: id("change-backend-kyc"), name: "API契約テスト", condition: "バックエンド反映後", ownerTeamId: id("team-identity"), status: "pending" },
-      { id: id("verify-migration"), releaseId: id("release-024"), componentChangeId: id("change-backend-kyc"), name: "migration完了確認", condition: "migration実行直後", ownerTeamId: id("team-identity"), status: "pending" },
-      { id: id("verify-ios"), releaseId: id("release-024"), componentChangeId: id("change-ios-kyc"), name: "TestFlight実機回帰", condition: "審査提出前", ownerTeamId: id("team-ios"), status: "running" },
-      { id: id("verify-android"), releaseId: id("release-024"), componentChangeId: id("change-android-kyc"), name: "内部テスト実機回帰", condition: "審査提出前", ownerTeamId: id("team-android"), status: "running" },
+      { id: id("verify-api"), releaseId: id("release-024"), componentChangeId: id("change-backend-kyc"), name: "API契約テスト", condition: "バックエンド反映後", ownerTeamId: id("team-identity"), status: "pending", method: "旧版・新版クライアントの契約テストを対象revisionへ実行する", successCriteria: "旧版と新版のクライアントが同じAPIを利用できる", requiredEvidenceTypes: ["contract"] },
+      { id: id("verify-migration"), releaseId: id("release-024"), componentChangeId: id("change-backend-kyc"), name: "migration完了確認", condition: "migration実行直後", ownerTeamId: id("team-identity"), status: "pending", method: "本番相当データにexpand migrationをdry-runし、変更前後の読み取りを比較する", successCriteria: "migrationが完了し、既存データを読み取れる", requiredEvidenceTypes: ["migration"] },
+      { id: id("verify-ios"), releaseId: id("release-024"), componentChangeId: id("change-ios-kyc"), name: "TestFlight実機回帰", condition: "審査提出前", ownerTeamId: id("team-ios"), status: "running", method: "unit testとrelease buildの完了後、TestFlightで本人確認フローを実機操作する", successCriteria: "本人確認の入力から審査状態表示まで実機で完了できる", requiredEvidenceTypes: ["build", "unit", "manual"] },
+      { id: id("verify-android"), releaseId: id("release-024"), componentChangeId: id("change-android-kyc"), name: "内部テスト実機回帰", condition: "審査提出前", ownerTeamId: id("team-android"), status: "running", method: "unit testとrelease bundleの完了後、内部テスト版で本人確認フローを実機操作する", successCriteria: "本人確認の入力から審査状態表示まで実機で完了できる", requiredEvidenceTypes: ["build", "unit", "manual"] },
+    ],
+    constraints: [
+      { id: id("constraint-store-review"), scope: { type: "release", id: id("release-024") }, kind: "external", hardness: "hard", source: "team-input", ownerTeamId: id("team-ios"), certainty: "unknown", statement: "モバイル担当チームは、App StoreとGoogle Playの審査通過見込みをリリース判定前に確認する必要があります。" },
+      { id: id("constraint-legal-copy"), scope: { type: "release-unit", id: id("feature-128") }, kind: "approval", hardness: "soft", source: "policy", ownerTeamId: id("team-ops"), certainty: "assumed", statement: "運用管理チームは、本人確認画面の文言変更が法務確認済みであることを公開前に確認する必要があります。" },
+    ],
+    resources: [
+      { id: id("resource-qa-env-1"), name: "QA環境 qa-staging-1", kind: "environment", ownerTeamId: id("team-ops"), capacity: 1 },
+      { id: id("resource-mobile-device-pool"), name: "モバイル検証端末プール", kind: "device", ownerTeamId: id("team-ops"), capacity: 1 },
+    ],
+    resourceCalendar: [
+      { id: id("window-ios-device"), resourceId: id("resource-mobile-device-pool"), label: "iOS 実機回帰", start: "2026-09-24T13:00", end: "2026-09-24T15:00", capacityUsed: 1, fixed: false },
+      { id: id("window-android-device"), resourceId: id("resource-mobile-device-pool"), label: "Android 内部テスト", start: "2026-09-24T14:00", end: "2026-09-24T16:00", capacityUsed: 1, fixed: false },
+      { id: id("window-api-env"), resourceId: id("resource-qa-env-1"), label: "API契約テスト", start: "2026-09-24T13:30", end: "2026-09-24T14:30", capacityUsed: 1, fixed: true },
+    ],
+    changeEvents: [
+      { id: id("event-ios-defect"), releaseUnitId: id("feature-128"), componentChangeId: id("change-ios-kyc"), kind: "bug", summary: "TestFlight実機確認で本人確認ステータスの再読込に失敗する不具合を検出", occurredAt: "2026-09-24T15:20:00+09:00", reportedBy: "佐藤 葵", status: "open" },
+    ],
+    changelogs: [
+      { id: id("changelog-backend-kyc"), componentChangeId: id("change-backend-kyc"), source: "github-release", summary: "本人確認ステータスAPIとexpand migrationを追加", impact: "本人確認画面と管理画面が新しい審査状態を参照する", compatibility: "既存フィールドを維持し、新フィールドを追加する", expectedVerification: "API契約テストとmigration dry-run", author: "ID基盤チーム", recordedAt: "2026-09-20T11:00:00+09:00" },
     ],
   },
   { id: id("release-025"), code: "R–025", name: "通知設定の再設計", status: "draft", ownerTeamId: id("team-ios"), scheduledFor: "2026-10-04", featureChanges: [{ id: id("feature-131"), name: "通知設定の再設計", description: "通知カテゴリと許諾導線を変更する", componentChanges: [] }], verifications: [] },

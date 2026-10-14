@@ -88,4 +88,14 @@ The current UI demonstrates the intended product boundary with representative da
 - What-if simulation
 - generated dependency view
 
-Jev responses are intentionally mocked in the prototype. A production adapter will call the hosted System One API from the server only; credentials never enter the browser.
+Execution-plan evaluation uses the hosted System One API through Relay's Node server. The local runbook generator remains deterministic prototype logic; it does not call Jev or claim Jev-generated prose.
+
+## Jev server configuration
+
+The Relay Node server reads `JEV_API_KEY` from the process environment or a local `.env` file. The key is server-only and must never use Vite's `VITE_` prefix. The browser may call `/api/jev/status`, which returns only whether the key is configured and never returns the key itself.
+
+`POST /api/jev/evaluate-plan` sends the serialized release state, release-specific planning policy, and generated candidates to the configured System One endpoint. Candidate generation is conditional: Relay derives feasible strategies from component topology, compatibility, migration mode, recovery readiness, and whether split approval is allowed. It records why an inapplicable strategy was excluded.
+
+Jev selects the candidate that best fits the declared objective and priority instead of minimizing risk alone. Relay supplies comparable duration, compatibility, recovery, coordination, and objective-fit metrics; Jev evaluates their tradeoffs and scores the remaining risk dimensions. Relay still applies deterministic blockers before allowing an approval request.
+
+Use `.env.example` as the variable template. Local `.env` files are excluded from Git.
