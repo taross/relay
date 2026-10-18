@@ -10,3 +10,7 @@ Before changing the product UI, read `docs/ui-design-system.md` and preserve its
 - Keep operational labels tied to the release-management domain. Avoid marketing copy and ornamental headings.
 - Write approval blockers and constraints as complete sentences with an actor, required state or action, and timing/threshold where applicable. Never place a verification procedure in the constraints list.
 - When a UI change adds a new visual pattern, document the pattern in `docs/ui-design-system.md` in the same change.
+
+## Experiment context
+
+This branch is an experimental effort to use the existing UI as a foundation for broader development support. Interpret future implementation prompts in that context without requiring the user to restate the experiment's purpose each time. Detailed product requirements will be supplied in subsequent prompts; do not infer them from this note.
