@@ -77,6 +77,13 @@ Before delivery, verify that:
 - Forms use token-based modal dialogs with a labelled heading, focus containment, Escape dismissal, focus restoration, and a visible keyboard-focus outline.
 - Provenance copy must say whether content is Manual or a Deterministic Sample and must explicitly state when no AI model is connected.
 
+## Product delivery planning workspace
+
+- Product-scoped Planning uses the existing connected status surface, quiet rectangular tabs, continuous record lists, and token-based dialogs. Catalog objects must not become independent dashboard cards.
+- Exact revision comparisons place the before and after hashes above a continuous field-difference list. Each row names the changed field and shows both serialized values; color alone must not communicate the change.
+- Manual provenance and Deterministic Validation remain explicit in headings and operational copy. The workspace must state that no solver or AI is connected.
+- Validation blockers are complete sentences from the deterministic validator. Planning constraints name the responsible actor and required state before approval.
+
 ## Dependency map
 
 - Present dependency order as rectilinear execution-stage columns using the same panel and soft surfaces as the rest of the release workspace.

@@ -80,7 +80,7 @@ export function ProductPage() {
     <nav className="workbench-context" aria-label="Product breadcrumb"><Link to="/products">Products</Link><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span></nav>
     <header className="workbench-heading">
       <div><span className="eyebrow">Product-scoped planning</span><h1>{product.name}</h1><p>{product.description || "No description"}</p></div>
-      <button className="primary" onClick={() => setCreating(true)}>Add Feature</button>
+      <div className="workbench-actions"><Link className="ghost header-link" to={`/products/${product.id}/planning`}>Open Planning</Link><button className="primary" onClick={() => setCreating(true)}>Add Feature</button></div>
     </header>
     <FormError message={error} />
     {product.features.length ? <table className="product-table">

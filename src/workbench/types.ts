@@ -106,4 +106,28 @@ export type Phase2Workspace = {
   latestReadinessValidation: ReadinessValidation | null;
 };
 
+export type PlanningRuleLevel = "mandatory" | "configurable" | "advisory";
+export type PlanningFindingStatus = "violated" | "unknown";
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+export type PlanningPolicyRule = { id: string; level: PlanningRuleLevel; kind: string; ruleVersion: string; parameters: { [key: string]: JsonValue } };
+export type PlanningPolicyRevision = { id: string; productId: string; revisionNumber: number; predecessorRevisionId: string | null; rules: PlanningPolicyRule[]; createdAt: string };
+export type PlanningDelivery = { id: string; productId: string; name: string; version: number; createdAt: string; updatedAt: string };
+export type PlanningCapacity = { effectiveFrom: string; effectiveTo: string | null; units: number };
+export type PlanningResource = { id: string; productId: string; name: string; version: number; capacity: PlanningCapacity[]; createdAt: string; updatedAt: string };
+export type PlanningTrain = { id: string; productId: string; name: string; cutoffAt: string | null; version: number; createdAt: string; updatedAt: string };
+export type PlanningDemand = { resourceId: string; units: number };
+export type PlanningActivity = { id: string; productId: string; name: string; startAt: string; endAt: string; predecessorIds: string[]; demands: PlanningDemand[] };
+export type PlanningDeliverable = { id: string; productId: string; name: string; order: number; predecessorIds: string[]; trainId: string | null; readyAt: string | null };
+export type PlanningConstraint = { id: string; level: PlanningRuleLevel; kind: string; ruleVersion: string; requiresEvidence: boolean; evidence: JsonValue; override: boolean; overrideRationale: string | null };
+export type PlanningScenarioRevision = { id: string; scenarioId: string; productId: string; deliveryId: string; revisionNumber: number; predecessorRevisionId: string | null; provenance: "manual"; inputHash: string; activities: PlanningActivity[]; deliverables: PlanningDeliverable[]; constraints: PlanningConstraint[]; createdAt: string };
+export type PlanningScenario = { id: string; productId: string; deliveryId: string; name: string; provenance: "manual"; clonedFromRevisionId?: string; version: number; revisions: PlanningScenarioRevision[]; createdAt: string; updatedAt: string };
+export type PlanningActual = { id: string; productId: string; scenarioId: string; activityId: string; kind: string; value: JsonValue; observedAt: string; recordedAt: string };
+export type PlanningFinding = { id: string; status: PlanningFindingStatus; code: string; message: string; entityType: string; entityId: string | null; details: { [key: string]: JsonValue } };
+export type PlanningValidation = { id: string; productId: string; scenarioId: string; revisionId: string; asOf: string; validatorSetVersion: string; inputHash: string; status: "blocked" | "verified"; findings: PlanningFinding[]; createdAt: string };
+export type PlanningWorkspace = { product: { id: string; name: string; version: number }; deliveries: PlanningDelivery[]; deliverables: PlanningDeliverable[]; policies: PlanningPolicyRevision[]; resources: PlanningResource[]; trains: PlanningTrain[]; scenarios: PlanningScenario[]; actuals: PlanningActual[]; validations: PlanningValidation[] };
+export type PlanningFieldDifference = { field: string; before: JsonValue; after: JsonValue };
+export type PlanningCollectionDifference = { collection: "activities" | "deliverables" | "constraints"; entityId: string; change: "added" | "removed" | "changed"; fields: PlanningFieldDifference[] };
+export type PlanningRevisionComparison = { productId: string; beforeRevisionId: string; afterRevisionId: string; beforeInputHash: string; afterInputHash: string; equal: boolean; fields: PlanningFieldDifference[]; collections: PlanningCollectionDifference[] };
+
 export type ApiErrorBody = { error?: string; code?: string; details?: { currentVersion?: number } };

@@ -53,6 +53,7 @@ export function FeatureWorkspace() {
     <header className="workbench-heading">
       <div><span className="eyebrow">Requirements phase</span><h1>{feature.name}</h1><p>{feature.summary || "No Feature summary"}</p></div>
       <div className="workbench-actions">
+        <Link className="ghost header-link" to={`/products/${workspace.product.id}/planning`}>Open Planning</Link>
         <button className="ghost" disabled={busy} onClick={() => run(() => workbenchApi.validate(feature.id, feature.version))}>Run consistency validation</button>
         {(feature.reviewState === "Draft" || feature.reviewState === "Changes Requested") ? <button className="primary" disabled={busy} onClick={() => setDialog(<ReviewAction title="Request Requirements review" submitLabel="Request review" close={() => setDialog(null)} submit={(input) => run(() => workbenchApi.requestReview(feature.id, { expectedVersion: feature.version, ...input }))} />)}>Request review</button> : null}
         {feature.reviewState === "In Review" ? <>
