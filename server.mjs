@@ -6,6 +6,12 @@ import { createServer as createViteServer, loadEnv } from "vite";
 import { checkDatabase, getDatabaseConfig } from "./db/client.mjs";
 import { writeConstraintEvaluations } from "./db/evaluation-repository.mjs";
 import { readState, writeState } from "./db/state-repository.mjs";
+import { handleWorkbenchHttp } from "./workbench/api.mjs";
+import { handlePhase2Http } from "./workbench/phase2-api.mjs";
+import { Phase2PostgresRepository } from "./workbench/phase2-postgres-repository.mjs";
+import { Phase2Service } from "./workbench/phase2-service.mjs";
+import { PostgresWorkbenchRepository } from "./workbench/postgres-repository.mjs";
+import { WorkbenchService } from "./workbench/service.mjs";
 
 const mode = process.env.NODE_ENV === "production" ? "production" : "development";
 const fileEnv = loadEnv(mode, process.cwd(), "");
@@ -24,6 +30,8 @@ export function readJevConfig(source = env) {
 
 const jev = readJevConfig();
 const database = getDatabaseConfig(env);
+const workbenchService = new WorkbenchService(new PostgresWorkbenchRepository(env));
+const phase2Service = new Phase2Service(new Phase2PostgresRepository(env));
 const vite = mode === "development" ? await createViteServer({ server: { middlewareMode: true }, appType: "spa" }) : undefined;
 
 const mimeTypes = new Map([
@@ -47,7 +55,11 @@ async function readJson(request) {
     if (size > 256_000) throw new Error("Request body is too large");
     chunks.push(chunk);
   }
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw Object.assign(new Error("Request body must contain valid JSON"), { status: 400, code: "INVALID_JSON" });
+  }
 }
 
 function scoreQuestion(instructions) {
@@ -128,6 +140,13 @@ function serveBuiltApp(request, response) {
 }
 
 const server = createServer((request, response) => {
+  if (request.url?.startsWith("/api/workbench/")) {
+    void (async () => {
+      if (await handlePhase2Http(request, response, phase2Service, readJson, sendJson)) return;
+      await handleWorkbenchHttp(request, response, workbenchService, readJson, sendJson);
+    })().catch((error) => sendJson(response, error.status ?? 500, { error: error.message || "Workbench request failed", code: error.code ?? "INTERNAL_ERROR" }));
+    return;
+  }
   if (request.method === "GET" && request.url === "/api/jev/status") {
     sendJson(response, 200, { configured: jev.configured });
     return;

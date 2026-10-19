@@ -69,6 +69,14 @@ Before delivery, verify that:
 - Gate blockers are complete sentences that name the responsible actor and the action or state required before reevaluation.
 - The release overview reports only the selected-test count; detailed categories, cases, gaps, and acceptance actions belong to the verification views.
 
+## Product and Feature Requirements workspace
+
+- Product and Feature indexes use compact tables with structural row separators. Object names are links; rows must not imply click behavior outside those links.
+- A Feature Requirements workspace presents Review State, Baseline Validity, and Latest Validation as three adjacent fields on one connected surface. Review State and Baseline Validity must never be combined into one status.
+- Requirement sources, candidates, revisions, findings, and baselines use continuous record lists separated by structural rules rather than cards.
+- Forms use token-based modal dialogs with a labelled heading, focus containment, Escape dismissal, focus restoration, and a visible keyboard-focus outline.
+- Provenance copy must say whether content is Manual or a Deterministic Sample and must explicitly state when no AI model is connected.
+
 ## Dependency map
 
 - Present dependency order as rectilinear execution-stage columns using the same panel and soft surfaces as the rest of the release workspace.

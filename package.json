@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "node server.mjs",
     "build": "tsc --noEmit && vite build",
+    "test": "node --test",
+    "db:migrate": "node db/migrate.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "start": "NODE_ENV=production node server.mjs"
   },
