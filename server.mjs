@@ -8,6 +8,9 @@ import { writeConstraintEvaluations } from "./db/evaluation-repository.mjs";
 import { readState, writeState } from "./db/state-repository.mjs";
 import { handleWorkbenchHttp } from "./workbench/api.mjs";
 import { handlePhase2Http } from "./workbench/phase2-api.mjs";
+import { handlePlanningHttp } from "./workbench/planning-api.mjs";
+import { PlanningPostgresRepository } from "./workbench/planning-postgres-repository.mjs";
+import { PlanningService } from "./workbench/planning-service.mjs";
 import { Phase2PostgresRepository } from "./workbench/phase2-postgres-repository.mjs";
 import { Phase2Service } from "./workbench/phase2-service.mjs";
 import { PostgresWorkbenchRepository } from "./workbench/postgres-repository.mjs";
@@ -32,6 +35,7 @@ const jev = readJevConfig();
 const database = getDatabaseConfig(env);
 const workbenchService = new WorkbenchService(new PostgresWorkbenchRepository(env));
 const phase2Service = new Phase2Service(new Phase2PostgresRepository(env));
+const planningService = new PlanningService(new PlanningPostgresRepository(env));
 const vite = mode === "development" ? await createViteServer({ server: { middlewareMode: true }, appType: "spa" }) : undefined;
 
 const mimeTypes = new Map([
@@ -142,6 +146,7 @@ function serveBuiltApp(request, response) {
 const server = createServer((request, response) => {
   if (request.url?.startsWith("/api/workbench/")) {
     void (async () => {
+      if (await handlePlanningHttp(request, response, planningService, readJson, sendJson)) return;
       if (await handlePhase2Http(request, response, phase2Service, readJson, sendJson)) return;
       await handleWorkbenchHttp(request, response, workbenchService, readJson, sendJson);
     })().catch((error) => sendJson(response, error.status ?? 500, { error: error.message || "Workbench request failed", code: error.code ?? "INTERNAL_ERROR" }));
